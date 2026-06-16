@@ -32,15 +32,16 @@ TypeScript · **Supabase** (auth, Postgres + RLS, Storage, Edge Functions).
 2. **Firebase (push no Android)** — necessário para o Expo Push entregar via FCM:
    1. Firebase Console → criar projeto.
    2. Adicionar app **Android** com package **`com.famshield.guard`**.
-   3. Baixar **`google-services.json`** e colocar em **`android/app/`**
-      (após o primeiro `prebuild`/build) **ou** na raiz do projeto, conforme apontado em
-      `app.json` (`android.googleServicesFile`).
+   3. Baixar **`google-services.json`** para a **raiz do projeto** (gitignored). Nos
+      builds EAS ele é provido pelo **file secret `GOOGLE_SERVICES_JSON`**
+      (`app.json` → `android.googleServicesFile: "$GOOGLE_SERVICES_JSON"`),
+      **já criado no projeto** via `eas secret:create` — não precisa recriar.
    4. No painel do **Expo** (EAS) → Credentials → enviar a *FCM V1 service account key*
       do Firebase para o projeto, para o Expo Push poder enviar via FCM.
 
    > O arquivo `google-services.json` **está no `.gitignore`** (contém credenciais).
    > O código trata a ausência dele graciosamente — o registro de push apenas não
-   > funciona até o build nativo tê-lo.
+   > funciona até o build nativo tê-lo (via file secret).
 
 3. **EAS projectId (push token)** — rode `eas init` para vincular o projeto e gravar
    `extra.eas.projectId` no `app.json`. Sem isso, `getExpoPushTokenAsync` não consegue
@@ -71,8 +72,12 @@ manualmente (uma única vez):
 
 1. Acessar **https://console.firebase.google.com** → criar projeto **`famshield-guard`**.
 2. Adicionar **app Android** com package **`com.famshield.guard`**.
-3. Baixar **`google-services.json`** → salvar em **`android/app/google-services.json`**.
-   - O arquivo está no `.gitignore` (contém credenciais) — não comitar.
+3. Baixar **`google-services.json`** → salvar na **raiz do projeto** (gitignored — não comitar).
+   - **Os builds EAS não leem o arquivo do disco.** O `app.json` aponta
+     `android.googleServicesFile` para **`$GOOGLE_SERVICES_JSON`**, um **EAS file secret**
+     **já criado** no projeto (`eas secret:create --type file`). Não precisa recriar; para
+     atualizar use `eas secret:create ... --force`. Conferir com `eas secret:list`.
+   - O arquivo local serve apenas para builds locais / `prebuild`.
 4. No console Firebase: **Project Settings → Cloud Messaging** → gerar a **FCM V1 Server Key**
    (service account key).
 5. Acessar **https://expo.dev** → seu projeto → **Credentials** → adicionar a **FCM V1 key**.
@@ -97,6 +102,11 @@ eas login
 # Gerar build de desenvolvimento (Android APK)
 eas build --platform android --profile development
 ```
+
+> 🔐 **google-services.json via file secret:** o build resolve
+> `android.googleServicesFile = "$GOOGLE_SERVICES_JSON"` a partir do **EAS file secret
+> `GOOGLE_SERVICES_JSON`**, que **já existe no projeto** (criado com `eas secret:create`).
+> Não é preciso recriar nem comitar o arquivo. (`eas secret:list` para conferir.)
 
 Ao terminar, o **APK** fica disponível para download no **painel EAS**:
 **https://expo.dev → seu projeto → Builds** (cada build tem um botão *Download* / QR code).
@@ -165,14 +175,15 @@ Supabase): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 ---
 
-## Pendências manuais (fora do alcance do CLI/MCP)
+## Setup manual — concluído ✅
 
-- [ ] Criar projeto Firebase + app Android `com.famshield.guard` e baixar
-      `google-services.json` para `android/app/`.
-- [ ] Enviar a FCM V1 key ao EAS (Credentials) para o Expo Push entregar no Android.
-- [ ] Rodar `eas init` para gerar o `projectId` (push token).
-- [ ] `supabase functions deploy notificar-circulo` (se não houver deploy via MCP).
-- [x] Desabilitar "Confirm email" no painel Supabase (feito no Prompt #2).
+- [x] Projeto Firebase + app Android `com.famshield.guard`; `google-services.json` na raiz (gitignored).
+- [x] **`google-services.json` provido aos builds via EAS file secret `GOOGLE_SERVICES_JSON`**
+      (`app.json` → `android.googleServicesFile: "$GOOGLE_SERVICES_JSON"`). Já criado — não recriar.
+- [x] FCM V1 key enviada ao EAS (Credentials).
+- [x] `eas init` → `extra.eas.projectId` no `app.json`.
+- [x] Edge Function `notificar-circulo` deployada (via Supabase MCP).
+- [x] "Confirm email" desabilitado no painel Supabase.
 
 ---
 

@@ -2,7 +2,8 @@
 
 > Documento vivo de contexto para o Claude Code e para o founder. Resume **o que é o
 > produto, a stack, o estado atual, as decisões e as pendências**. Atualize a cada prompt.
-> Última atualização: **2026-06-16** (Prompt #5 — setup manual completo: Firebase + EAS + FCM V1).
+> Última atualização: **2026-06-16** (Prompt #5 — setup manual completo: Firebase + EAS + FCM V1;
+> `google-services.json` via EAS file secret `$GOOGLE_SERVICES_JSON`).
 
 ---
 
@@ -175,6 +176,11 @@ Repo: **https://github.com/Hadaward37/famshield-guard** (público, branch `main`
 
 - [x] **Firebase**: projeto criado + app Android `com.famshield.guard`;
       `google-services.json` na raiz (gitignored) — Prompt #5.
+- [x] **`google-services.json` via EAS file secret**: `app.json` →
+      `android.googleServicesFile: "$GOOGLE_SERVICES_JSON"`; o file secret
+      `GOOGLE_SERVICES_JSON` **já existe** no projeto EAS (criado via `eas secret:create`),
+      injetado no build — **não recriar** (atualizar com `--force`; conferir com
+      `eas secret:list`). Arquivo local serve só para build local/`prebuild`.
 - [x] **FCM V1 key** enviada ao EAS (Credentials) — Expo Push já entrega no Android (Prompt #5).
 - [x] **`eas init`** → `extra.eas.projectId` = `0635a0a2-3d7d-4272-b336-48c7bd9a36f1`,
       `owner: "famshield"` no `app.json` (Prompt #5). Push token já pode ser gerado.
