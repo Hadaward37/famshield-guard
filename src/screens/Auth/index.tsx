@@ -7,7 +7,7 @@ import {
   maskPhoneBR,
   isValidPhoneBR,
   isValidEmail,
-  onlyDigits,
+  normalizePhoneBR,
   translateAuthError,
 } from '../../utils/format';
 
@@ -65,7 +65,7 @@ export default function AuthScreen() {
         if (userId) {
           const { error: profileError } = await supabase
             .from('profiles')
-            .update({ nome: nome.trim(), telefone: onlyDigits(telefone) })
+            .update({ nome: nome.trim(), telefone: normalizePhoneBR(telefone) })
             .eq('id', userId);
           if (profileError) throw profileError;
         }

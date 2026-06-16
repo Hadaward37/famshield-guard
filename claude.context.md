@@ -75,6 +75,10 @@ como engenheiro de software escrevendo todo o código.
 
 > ⚠️ **Não existe** tabela `contatos_emergencia` (alguns prompts citam esse nome). A
 > tabela real de contatos é **`circulo_confianca`**.
+> 📞 **Telefones são gravados normalizados** (`normalizePhoneBR` em `utils/format.ts`):
+> formato nacional canônico (DDD + número, sem `+55`). A Edge Function usa a MESMA
+> normalização. Isso é o que faz o match de notificação funcionar — manter as duas em
+> sincronia ao mexer em qualquer uma.
 > ⚠️ `eventos_panico` é o fluxo ativo; `incidentes`/`notificacoes_incidente` são legados
 > do Prompt #1 (mantidos, não usados pelo fluxo de pânico).
 

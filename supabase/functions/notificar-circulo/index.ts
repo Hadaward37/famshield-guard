@@ -34,9 +34,17 @@ function json(status: number, body: unknown): Response {
   });
 }
 
-/** Mantém só dígitos para comparar telefones de formatos diferentes. */
+/**
+ * Normaliza telefone BR para o formato nacional canônico (DDD + número), removendo o
+ * código de país +55 quando presente. DEVE ser idêntica a normalizePhoneBR do app
+ * (src/utils/format.ts) — o match de notificação depende dessa consistência.
+ */
 function normalizePhone(input: string | null | undefined): string {
-  return (input ?? '').replace(/\D/g, '');
+  let d = (input ?? '').replace(/\D/g, '');
+  if ((d.length === 12 || d.length === 13) && d.startsWith('55')) {
+    d = d.slice(2);
+  }
+  return d;
 }
 
 function chunk<T>(arr: T[], size: number): T[][] {

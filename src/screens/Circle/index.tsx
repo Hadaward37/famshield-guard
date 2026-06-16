@@ -15,7 +15,7 @@ import {
 import { theme } from '../../constants/theme';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
-import { maskPhoneBR, isValidPhoneBR, onlyDigits, translateAuthError } from '../../utils/format';
+import { maskPhoneBR, isValidPhoneBR, normalizePhoneBR, translateAuthError } from '../../utils/format';
 
 interface Contato {
   id: string;
@@ -98,7 +98,7 @@ export default function CircleScreen() {
     try {
       const payload = {
         nome: nome.trim(),
-        telefone: onlyDigits(telefone),
+        telefone: normalizePhoneBR(telefone),
         email: email.trim() || null,
         notificar_push: notificarPush,
         notificar_sms: notificarSms,

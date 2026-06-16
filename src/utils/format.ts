@@ -4,6 +4,22 @@ export function onlyDigits(value: string): string {
 }
 
 /**
+ * Normaliza um telefone BR para o formato nacional canônico (DDD + número, 10–11
+ * dígitos), removendo o código de país +55 quando presente.
+ *
+ * É o formato usado para GRAVAR telefones (profiles e círculo) e para CASAR contatos
+ * com perfis na notificação de pânico. Sem isso, "+55 11 9..." e "11 9..." não batem
+ * e ninguém é notificado. Deve ficar idêntico à normalização da Edge Function.
+ */
+export function normalizePhoneBR(input: string): string {
+  let d = onlyDigits(input);
+  if ((d.length === 12 || d.length === 13) && d.startsWith('55')) {
+    d = d.slice(2);
+  }
+  return d;
+}
+
+/**
  * Máscara de telefone brasileiro.
  * Celular: (XX) XXXXX-XXXX | Fixo: (XX) XXXX-XXXX
  */
