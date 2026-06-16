@@ -2,7 +2,7 @@
 
 > Documento vivo de contexto para o Claude Code e para o founder. Resume **o que é o
 > produto, a stack, o estado atual, as decisões e as pendências**. Atualize a cada prompt.
-> Última atualização: **2026-06-16** (após Prompt #4 — docs de Firebase/dev build/E2E + fix RECORD_AUDIO).
+> Última atualização: **2026-06-16** (Prompt #5 — `eas init`: projeto vinculado ao EAS).
 
 ---
 
@@ -176,8 +176,8 @@ Repo: **https://github.com/Hadaward37/famshield-guard** (público, branch `main`
 - [ ] **Firebase**: criar projeto + app Android `com.famshield.guard`, baixar
       `google-services.json` → `android/app/` (gitignored).
 - [ ] **FCM V1 key** → enviar ao EAS (Credentials) para o Expo Push entregar no Android.
-- [ ] **`eas init`** → gerar `extra.eas.projectId` (sem ele, `getExpoPushTokenAsync` só
-      loga aviso, não quebra).
+- [x] **`eas init`** → `extra.eas.projectId` = `0635a0a2-3d7d-4272-b336-48c7bd9a36f1`,
+      `owner: "famshield"` no `app.json` (Prompt #5). Push token já pode ser gerado.
 - [x] Desabilitar "Confirm email" no painel Supabase (Prompt #2).
 - [x] Deploy da Edge Function `notificar-circulo` (feito via MCP — não precisa CLI).
 - [x] Suprimir `RECORD_AUDIO` do plugin expo-camera (Prompt #4 — `recordAudioAndroid: false`).

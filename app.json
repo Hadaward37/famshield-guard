@@ -16,7 +16,10 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
-        "VIBRATE"
+        "VIBRATE",
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -46,6 +49,12 @@
           "locationWhenInUsePermission": "O FamShield usa sua localização durante um incidente para compartilhar onde você está com seu círculo de confiança."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0635a0a2-3d7d-4272-b336-48c7bd9a36f1"
+      }
+    },
+    "owner": "famshield"
   }
 }
