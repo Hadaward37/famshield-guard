@@ -35,7 +35,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "O FamShield usa a câmera para registrar uma foto durante um acionamento de pânico, ajudando a comprovar uma possível coação."
+          "cameraPermission": "O FamShield usa a câmera para registrar uma foto durante um acionamento de pânico, ajudando a comprovar uma possível coação.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
