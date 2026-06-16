@@ -2,7 +2,7 @@
 
 > Documento vivo de contexto para o Claude Code e para o founder. Resume **o que é o
 > produto, a stack, o estado atual, as decisões e as pendências**. Atualize a cada prompt.
-> Última atualização: **2026-06-16** (Prompt #5 — `eas init`: projeto vinculado ao EAS).
+> Última atualização: **2026-06-16** (Prompt #5 — setup manual completo: Firebase + EAS + FCM V1).
 
 ---
 
@@ -173,9 +173,9 @@ Repo: **https://github.com/Hadaward37/famshield-guard** (público, branch `main`
 
 ## 7. Pendências manuais do founder (fora do CLI/MCP)
 
-- [ ] **Firebase**: criar projeto + app Android `com.famshield.guard`, baixar
-      `google-services.json` → `android/app/` (gitignored).
-- [ ] **FCM V1 key** → enviar ao EAS (Credentials) para o Expo Push entregar no Android.
+- [x] **Firebase**: projeto criado + app Android `com.famshield.guard`;
+      `google-services.json` na raiz (gitignored) — Prompt #5.
+- [x] **FCM V1 key** enviada ao EAS (Credentials) — Expo Push já entrega no Android (Prompt #5).
 - [x] **`eas init`** → `extra.eas.projectId` = `0635a0a2-3d7d-4272-b336-48c7bd9a36f1`,
       `owner: "famshield"` no `app.json` (Prompt #5). Push token já pode ser gerado.
 - [x] Desabilitar "Confirm email" no painel Supabase (Prompt #2).
