@@ -59,6 +59,85 @@ de confiança do idoso.
 
 ---
 
+## Firebase Setup (obrigatório para push Android)
+
+O Expo Push entrega no Android **através do FCM**. Sem esta configuração, todo o fluxo
+de pânico funciona, **exceto a entrega da notificação** no aparelho do familiar. Execute
+manualmente (uma única vez):
+
+1. Acessar **https://console.firebase.google.com** → criar projeto **`famshield-guard`**.
+2. Adicionar **app Android** com package **`com.famshield.guard`**.
+3. Baixar **`google-services.json`** → salvar em **`android/app/google-services.json`**.
+   - O arquivo está no `.gitignore` (contém credenciais) — não comitar.
+4. No console Firebase: **Project Settings → Cloud Messaging** → gerar a **FCM V1 Server Key**
+   (service account key).
+5. Acessar **https://expo.dev** → seu projeto → **Credentials** → adicionar a **FCM V1 key**.
+6. Rodar **`eas init`** na pasta do projeto para gerar **`extra.eas.projectId`** no `app.json`
+   (necessário para o `getExpoPushTokenAsync` gerar o token de push).
+
+---
+
+## Gerando o Development Build
+
+A partir do **Prompt #3** o app usa `expo-dev-client` (push, câmera, localização nativas),
+então **o Expo Go não funciona mais** — é preciso um **development build** (APK próprio com
+os módulos nativos embutidos), que substitui o Expo Go no dia a dia.
+
+```powershell
+# Instalar EAS CLI se não tiver
+npm install -g eas-cli
+
+# Login (primeira vez)
+eas login
+
+# Gerar build de desenvolvimento (Android APK)
+eas build --platform android --profile development
+```
+
+Ao terminar, o **APK** fica disponível para download no **painel EAS**:
+**https://expo.dev → seu projeto → Builds** (cada build tem um botão *Download* / QR code).
+Instale o APK no dispositivo/emulador. Depois, no dia a dia, rode:
+
+```powershell
+npx expo start --dev-client
+```
+
+---
+
+## Roteiro de Teste E2E — Fluxo de Pânico
+
+### Pré-requisitos
+- **2 dispositivos Android** com o development build instalado
+  (ou 1 device + 1 emulador com Google Play).
+- **2 contas** criadas no app: **Conta A = idoso**, **Conta B = familiar**.
+- Conta A com **Conta B cadastrada no círculo de confiança** (telefone da B = telefone
+  do perfil da B).
+
+### Sequência de teste
+
+| Passo | Ação | Resultado esperado |
+|---|---|---|
+| 1 | Conta A: abrir app, ir para Home | `PanicButton` visível |
+| 2 | Conta A: segurar botão por 3s | Haptics + anel de progresso |
+| 3 | App solicitar permissões (1ª vez) | Conceder localização + câmera |
+| 4 | Câmera frontal abrir | Preview visível |
+| 5 | Captura (botão Foto) | Foto tirada, upload iniciado |
+| 6 | Estado `DONE` aparecer | Mensagem de confirmação |
+| 7 | Conta B: receber push | Notificação com nome + horário |
+| 8 | Supabase: verificar `eventos_panico` | Linha inserida com lat/lng + `foto_url` |
+| 9 | Supabase: verificar `panic-photos` | Arquivo `{user_id}/{evento_id}.jpg` existe |
+
+### Critérios de falha a registrar
+- **Timeout de localização (>10s)** → registrar dispositivo e condição de rede.
+- **Push não chegou na Conta B** → verificar `push_tokens` no Supabase e a FCM key no EAS.
+- **Upload falhou** → verificar as policies do bucket e o tamanho da imagem.
+
+### Cobertura por dependência
+- **Funciona SEM Firebase:** passos **1–6** + passos **8–9**.
+- **Requer Firebase:** passo **7** (entrega do push).
+
+---
+
 ## Banco de dados (Supabase)
 
 Tabelas principais: `profiles`, `circulo_confianca`, `bancos_usuario`,

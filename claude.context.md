@@ -2,7 +2,7 @@
 
 > Documento vivo de contexto para o Claude Code e para o founder. Resume **o que é o
 > produto, a stack, o estado atual, as decisões e as pendências**. Atualize a cada prompt.
-> Última atualização: **2026-06-16** (após Prompt #3).
+> Última atualização: **2026-06-16** (após Prompt #4 — docs de Firebase/dev build/E2E + fix RECORD_AUDIO).
 
 ---
 
@@ -152,12 +152,20 @@ Nenhum estado exige reiniciar o app.
 - **Prompt #3 ✅** — Fluxo de pânico: PanicButton, PanicFlow, serviços (location,
   notifications, panic), Edge Function, migrations (eventos_panico, push_tokens), bucket,
   LargeSecureStore, configs de dev build.
+- **Prompt #4 ✅** — Onboarding de dev/teste: README com **Firebase Setup**,
+  **Gerando o Development Build** e **Roteiro de Teste E2E** (fluxo de pânico). Fix:
+  suprimido `RECORD_AUDIO` do plugin expo-camera (`recordAudioAndroid: false`).
+  > A **execução** do dev build + teste E2E em device segue como pendência do founder
+  > (depende de Firebase/EAS — ver seção 7).
 
 **Commits recentes:**
 - `feat: setup inicial FamShield Guard (expo + supabase + navigation)`
 - `feat: onboarding (auth + consentimento LGPD + círculo de confiança)`
 - `refactor: migrate session storage to LargeSecureStore`
 - `feat: panic flow (gesture + location + camera + push notification)`
+- `fix: normalizar telefones (DDD canônico, sem +55) no app e na Edge Function`
+- `fix: suppress RECORD_AUDIO permission from expo-camera plugin`
+- `docs: firebase setup, dev build instructions, E2E test roteiro`
 
 Repo: **https://github.com/Hadaward37/famshield-guard** (público, branch `main`).
 
@@ -172,6 +180,7 @@ Repo: **https://github.com/Hadaward37/famshield-guard** (público, branch `main`
       loga aviso, não quebra).
 - [x] Desabilitar "Confirm email" no painel Supabase (Prompt #2).
 - [x] Deploy da Edge Function `notificar-circulo` (feito via MCP — não precisa CLI).
+- [x] Suprimir `RECORD_AUDIO` do plugin expo-camera (Prompt #4 — `recordAudioAndroid: false`).
 
 > A partir do Prompt #3, **Expo Go não basta** — usar **development build**:
 > `eas build --profile development --platform android` e depois `npx expo start --dev-client`.
@@ -200,13 +209,10 @@ Repo: **https://github.com/Hadaward37/famshield-guard** (público, branch `main`
 
 ---
 
-## 9. Próximos passos prováveis (Prompt #4+)
+## 9. Próximos passos prováveis (Prompt #5+)
 
-- Gerar development build e testar o fluxo de pânico ponta a ponta (2 contas).
 - Histórico de eventos / tela de detalhe (deep link da notificação — há TODO em
   `notifications.ts`).
 - Fallback **SMS** de emergência (config já existe em `configuracao_panico.sms_fallback`).
 - **Recovery**: guia de bloqueio emergencial dos bancos (`bancos_usuario`).
 - Configuração do **gesto** de pânico (`configuracao_panico.gesture_tipo`).
-- Suprimir `RECORD_AUDIO` (adicionado automaticamente pelo plugin expo-camera) se quiser
-  minimizar a superfície de permissões.
