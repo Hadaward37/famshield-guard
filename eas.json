@@ -3,9 +3,21 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "googleServicesFile": "$GOOGLE_SERVICES_JSON"
+      }
     },
-    "preview": { "distribution": "internal" },
-    "production": {}
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "googleServicesFile": "$GOOGLE_SERVICES_JSON"
+      }
+    },
+    "production": {
+      "android": {
+        "googleServicesFile": "$GOOGLE_SERVICES_JSON"
+      }
+    }
   }
 }
