@@ -8,6 +8,10 @@ e (em breve) guia o bloqueio emergencial dos bancos.
 Stack: **Expo SDK 56** (managed + dev client) · React Native 0.85 · React 19.2 ·
 TypeScript · **Supabase** (auth, Postgres + RLS, Storage, Edge Functions).
 
+> 📌 **Contexto completo do projeto:** [`CLAUDE_CONTEXT.md`](./CLAUDE_CONTEXT.md) —
+> documento vivo com produto, stack, schema, decisões, progresso por prompt e pendências.
+> **Comece por ele** (e mantenha atualizado a cada prompt).
+
 ---
 
 ## Setup de desenvolvimento
