@@ -1,38 +1,81 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen, Title, Body, Card, GhostButton } from '../../components/ui';
+import PanicButton from '../../components/PanicButton';
+import PanicFlow from '../Panic/PanicFlow';
 import { theme } from '../../constants/theme';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
+interface UltimoEvento {
+  id: string;
+  criado_em: string;
+  notificacoes_enviadas: number;
+}
+
+function formatarDataHora(iso: string): string {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} às ${p(
+    d.getHours(),
+  )}:${p(d.getMinutes())}`;
+}
+
+function UltimoAlertaCard({ evento }: { evento: UltimoEvento }) {
+  return (
+    <Card style={styles.alertaCard}>
+      <Text style={styles.alertaTitulo}>Último alerta</Text>
+      <Text style={styles.alertaData}>{formatarDataHora(evento.criado_em)}</Text>
+      <Text style={styles.alertaInfo}>
+        {evento.notificacoes_enviadas}{' '}
+        {evento.notificacoes_enviadas === 1 ? 'contato notificado' : 'contatos notificados'}
+      </Text>
+    </Card>
+  );
+}
+
 export default function HomeScreen() {
   const { session, profile } = useAuth();
   const [contatos, setContatos] = useState<number | null>(null);
+  const [ultimoEvento, setUltimoEvento] = useState<UltimoEvento | null>(null);
+  const [panicVisible, setPanicVisible] = useState(false);
 
-  const loadCount = useCallback(async () => {
+  const load = useCallback(async () => {
     if (!session) return;
-    const { count } = await supabase
-      .from('circulo_confianca')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', session.user.id);
+    const userId = session.user.id;
+
+    const [{ count }, { data: evento }] = await Promise.all([
+      supabase
+        .from('circulo_confianca')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId),
+      supabase
+        .from('eventos_panico')
+        .select('id, criado_em, notificacoes_enviadas')
+        .eq('user_id', userId)
+        .eq('cancelado', false)
+        .order('criado_em', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
     setContatos(count ?? 0);
+    setUltimoEvento((evento as UltimoEvento) ?? null);
   }, [session]);
 
   useFocusEffect(
     useCallback(() => {
-      loadCount();
-    }, [loadCount]),
+      load();
+    }, [load]),
   );
 
   const primeiroNome = (profile?.nome ?? '').split(' ')[0] || 'você';
 
-  function handlePanicPlaceholder() {
-    Alert.alert(
-      'Em construção',
-      'O botão de pânico ainda não está funcional. A lógica de acionamento (localização, foto, alerta ao círculo) chega na próxima etapa.',
-    );
-  }
+  // Mostra o card só se o último alerta foi nas últimas 24h.
+  const alertaRecente =
+    ultimoEvento &&
+    Date.now() - new Date(ultimoEvento.criado_em).getTime() < 24 * 60 * 60 * 1000;
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -50,24 +93,15 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.center}>
-        <Pressable
-          onPress={handlePanicPlaceholder}
-          style={({ pressed }) => [styles.panicBtn, pressed && { opacity: 0.85 }]}
-        >
-          <Text style={styles.panicLabel}>PÂNICO</Text>
-          <Text style={styles.panicSub}>placeholder · não funcional</Text>
-        </Pressable>
-        <Card style={styles.warnCard}>
-          <Body muted>
-            ⚠️ Este botão é um placeholder. A lógica de pânico (gesto silencioso,
-            localização, foto e alerta ao círculo) será implementada na próxima etapa.
-          </Body>
-        </Card>
+        <PanicButton onPanicTriggered={() => setPanicVisible(true)} />
+        {alertaRecente && ultimoEvento ? <UltimoAlertaCard evento={ultimoEvento} /> : null}
       </View>
 
       <View style={styles.footer}>
         <GhostButton title="Sair da conta" onPress={handleLogout} />
       </View>
+
+      <PanicFlow visible={panicVisible} onDismiss={() => setPanicVisible(false)} />
     </Screen>
   );
 }
@@ -76,18 +110,9 @@ const styles = StyleSheet.create({
   content: { flex: 1, justifyContent: 'space-between', paddingVertical: 32 },
   header: { gap: 8 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 24 },
-  panicBtn: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: theme.colors.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 6,
-    borderColor: '#7F1D1D',
-  },
-  panicLabel: { color: theme.colors.text, fontSize: 32, fontWeight: '800', letterSpacing: 2 },
-  panicSub: { color: '#FCA5A5', fontSize: 12, marginTop: 6 },
-  warnCard: { borderColor: '#7F1D1D' },
   footer: { alignItems: 'center' },
+  alertaCard: { width: '100%' },
+  alertaTitulo: { color: theme.colors.text, fontSize: 15, fontWeight: '700' },
+  alertaData: { color: theme.colors.textMuted, fontSize: 14 },
+  alertaInfo: { color: theme.colors.primary, fontSize: 14, fontWeight: '600' },
 });

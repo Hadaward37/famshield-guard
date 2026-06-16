@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
+import { registerPushToken, setupNotificationHandlers } from '../services/notifications';
 
 export interface ProfileLite {
   id: string;
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    setupNotificationHandlers();
 
     (async () => {
       const { data } = await supabase.auth.getSession();
@@ -66,12 +68,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session ?? null);
       await loadFor(data.session ?? null);
       if (mounted) setLoading(false);
+      // Com sessão ativa, registra o token de push deste dispositivo (best-effort).
+      if (data.session) void registerPushToken();
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, s) => {
       if (!mounted) return;
       setSession(s);
       await loadFor(s);
+      if (s && event === 'SIGNED_IN') void registerPushToken();
     });
 
     return () => {

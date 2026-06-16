@@ -10,6 +10,14 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.famshield.guard",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "VIBRATE"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -20,6 +28,22 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O FamShield usa a câmera para registrar uma foto durante um acionamento de pânico, ajudando a comprovar uma possível coação."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O FamShield usa sua localização durante um incidente para compartilhar onde você está com seu círculo de confiança."
+        }
+      ]
+    ]
   }
 }
