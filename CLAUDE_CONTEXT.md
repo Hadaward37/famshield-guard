@@ -2,8 +2,9 @@
 
 > Documento vivo de contexto para o Claude Code e para o founder. Resume **o que é o
 > produto, a stack, o estado atual, as decisões e as pendências**. Atualize a cada prompt.
-> Última atualização: **2026-06-16** (Prompt #5 — setup manual completo: Firebase + EAS + FCM V1;
-> `google-services.json` via EAS file secret `$GOOGLE_SERVICES_JSON`).
+> Última atualização: **2026-06-17** — Prompt #4 **VALIDADO E2E** (teste real, 2 contas:
+> pânico → localização → foto → push FCM entregue). `google-services.json` provido no build
+> via hook `eas-build-pre-install`.
 
 ---
 
@@ -153,11 +154,15 @@ Nenhum estado exige reiniciar o app.
 - **Prompt #3 ✅** — Fluxo de pânico: PanicButton, PanicFlow, serviços (location,
   notifications, panic), Edge Function, migrations (eventos_panico, push_tokens), bucket,
   LargeSecureStore, configs de dev build.
-- **Prompt #4 ✅** — Onboarding de dev/teste: README com **Firebase Setup**,
-  **Gerando o Development Build** e **Roteiro de Teste E2E** (fluxo de pânico). Fix:
-  suprimido `RECORD_AUDIO` do plugin expo-camera (`recordAudioAndroid: false`).
-  > A **execução** do dev build + teste E2E em device segue como pendência do founder
-  > (depende de Firebase/EAS — ver seção 7).
+- **Prompt #4 ✅ CONCLUÍDO + VALIDADO E2E** — Onboarding de dev/teste: README com
+  **Firebase Setup**, **Gerando o Development Build** e **Roteiro de Teste E2E** (fluxo de
+  pânico). Fix: suprimido `RECORD_AUDIO` do plugin expo-camera (`recordAudioAndroid: false`).
+  > **Validado em teste real (2 contas físicas), não só código (2026-06-17):**
+  > long-press 3s disparou o fluxo até `DONE`; localização gravada (lat/long em
+  > `eventos_panico`); foto enviada ao bucket `panic-photos`; **push FCM V1 entregue** no
+  > celular do membro do círculo; registro completo em `eventos_panico` (com o fix de
+  > telefone do commit `f536368` em ação). Dev build via EAS + `eas-build-pre-install`
+  > hook para `google-services.json` funcionando.
 
 **Commits recentes:**
 - `feat: setup inicial FamShield Guard (expo + supabase + navigation)`
@@ -167,6 +172,9 @@ Nenhum estado exige reiniciar o app.
 - `fix: normalizar telefones (DDD canônico, sem +55) no app e na Edge Function`
 - `fix: suppress RECORD_AUDIO permission from expo-camera plugin`
 - `docs: firebase setup, dev build instructions, E2E test roteiro`
+- `chore: link project to EAS (eas init)`
+- `chore: all manual setup completed (firebase + eas + fcm v1)`
+- `fix: write google-services.json via eas-build-pre-install hook`
 
 Repo: **https://github.com/Hadaward37/famshield-guard** (público, branch `main`).
 
