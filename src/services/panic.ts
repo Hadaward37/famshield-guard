@@ -52,16 +52,24 @@ export async function uploadFotoPanico(
   }
 }
 
+export interface ResultadoNotificacao {
+  /** Contatos alcançados por push (têm o app). */
+  push: number;
+  /** Contatos alcançados por SMS de fallback (sem o app). */
+  sms: number;
+}
+
 /**
- * Chama a Edge Function que notifica o círculo de confiança.
- * Retorna a quantidade de contatos notificados (0 se nada/erro controlado).
+ * Chama a Edge Function que notifica o círculo de confiança (push + SMS fallback).
+ * Retorna a contagem por canal (0 se nada/erro controlado).
  */
-export async function notificarCirculo(eventoId: string): Promise<number> {
+export async function notificarCirculo(eventoId: string): Promise<ResultadoNotificacao> {
   const { data, error } = await supabase.functions.invoke('notificar-circulo', {
     body: { evento_id: eventoId },
   });
   if (error) throw error;
-  return (data as { notificados?: number })?.notificados ?? 0;
+  const r = data as { notificados?: number; sms_enviados?: number };
+  return { push: r?.notificados ?? 0, sms: r?.sms_enviados ?? 0 };
 }
 
 /** Marca um evento como cancelado (falso alarme durante a contagem). */

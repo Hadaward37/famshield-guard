@@ -2,9 +2,9 @@
 
 > Documento vivo de contexto para o Claude Code e para o founder. Resume **o que é o
 > produto, a stack, o estado atual, as decisões e as pendências**. Atualize a cada prompt.
-> Última atualização: **2026-06-17** — Auditoria profunda + correções: alerta agora é
-> **acionável** (localização/foto na notificação), RLS/índices otimizados. Parecer de
-> viabilidade e lacunas críticas na **seção 10**.
+> Última atualização: **2026-06-17** — Auditoria + correções: alerta **acionável**
+> (localização/foto na notificação), **SMS fallback** implementado (Edge Function v4,
+> Twilio — pendente de credenciais), RLS/índices otimizados. Parecer na **seção 10**.
 
 ---
 
@@ -225,12 +225,13 @@ Repo: **https://github.com/Hadaward37/famshield-guard** (público, branch `main`
 
 ## 9. Próximos passos (Prompt #5+) — priorizados pela auditoria
 
-1. **SMS fallback (CRÍTICO)** — hoje, se o contato não tem o app, recebe NADA. Num
-   produto BR de massa isso inviabiliza o alerta. Precisa provedor (Zenvia/Twilio/AWS SNS)
-   + Edge Function. Config `sms_fallback` já existe.
+1. ✅ **SMS fallback IMPLEMENTADO** (Edge Function v4, Twilio) — contatos sem o app e com
+   `notificar_sms` recebem SMS com nome + link de localização, se o usuário consentiu
+   (`sms_fallback`). **Pendente só das credenciais Twilio** (secrets — ver seção 7). Sem
+   elas, o SMS é pulado sem quebrar o push.
 2. **Tela de incidente para o CONTATO** — em vez de só abrir o Maps no tap, uma tela com
-   mapa + foto + ações ("estou a caminho", "liguei 190"). Requer dar leitura do evento ao
-   contato (RLS por telefone) OU manter via payload assinado.
+   mapa + foto + ações ("estou a caminho", "liguei 190"). A notificação já carrega
+   `maps_url`/`foto_url` (assinada) no payload — dá pra montar a tela sem cross-user RLS.
 3. **Localização em tempo real de verdade** — hoje é 1 fix único no acionamento. O claim
    "tempo real" exige background location updates + atualização contínua (permissão
    sensível na Play Store).
@@ -264,6 +265,8 @@ Store; mercado tem concorrentes (Life360, bSafe, apps de PM/estaduais).
 algo que salva** — SMS fallback + tela de incidente para o contato — antes de gesto/UI/
 billing. Sem isso o "uau" do teste E2E não se traduz em valor real para quem recebe.
 
-### Pendência manual adicional (Supabase Dashboard)
-- [ ] **Leaked Password Protection** (Auth → Policies) está desligado — ligar
+### Pendências manuais adicionais
+- [ ] **Credenciais Twilio** (SMS fallback): `supabase secrets set TWILIO_ACCOUNT_SID=…
+      TWILIO_AUTH_TOKEN=… TWILIO_FROM=+E164`. Sem isso o SMS não envia (push continua).
+- [ ] **Leaked Password Protection** (Supabase → Auth → Policies) desligado — ligar
       (checa HaveIBeenPwned). Advisor de segurança aponta como WARN.

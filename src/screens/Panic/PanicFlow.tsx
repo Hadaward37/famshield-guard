@@ -16,6 +16,7 @@ import {
   uploadFotoPanico,
   notificarCirculo,
   cancelarEvento,
+  type ResultadoNotificacao,
 } from '../../services/panic';
 
 type PanicStatus =
@@ -43,7 +44,7 @@ export default function PanicFlow({ visible, onDismiss }: PanicFlowProps) {
 
   const [status, setStatus] = useState<PanicStatus>('IDLE');
   const [countdown, setCountdown] = useState(COUNTDOWN_FROM);
-  const [notificados, setNotificados] = useState(0);
+  const [resultado, setResultado] = useState<ResultadoNotificacao>({ push: 0, sms: 0 });
   const [erro, setErro] = useState('');
 
   const coordsRef = useRef<Coords | null>(null);
@@ -67,8 +68,8 @@ export default function PanicFlow({ visible, onDismiss }: PanicFlowProps) {
           await uploadFotoPanico(userId, eventoId, base64);
         }
         setStatus('SENDING');
-        const n = await notificarCirculo(eventoId);
-        setNotificados(n);
+        const r = await notificarCirculo(eventoId);
+        setResultado(r);
         setStatus('DONE');
       } catch (e) {
         if (__DEV__) console.warn('[PanicFlow] erro ao enviar alerta:', e);
@@ -102,7 +103,7 @@ export default function PanicFlow({ visible, onDismiss }: PanicFlowProps) {
   useEffect(() => {
     if (visible && status === 'IDLE') {
       setErro('');
-      setNotificados(0);
+      setResultado({ push: 0, sms: 0 });
       coordsRef.current = null;
       eventoIdRef.current = null;
       setCountdown(COUNTDOWN_FROM);
@@ -218,26 +219,29 @@ export default function PanicFlow({ visible, onDismiss }: PanicFlowProps) {
       case 'SENDING':
         return <Loading texto="Notificando contatos..." />;
 
-      case 'DONE':
+      case 'DONE': {
+        const total = resultado.push + resultado.sms;
+        const partes: string[] = [];
+        if (resultado.push > 0) partes.push(`${resultado.push} por push`);
+        if (resultado.sms > 0) partes.push(`${resultado.sms} por SMS`);
         return (
           <View style={styles.centerArea}>
             <Text style={styles.bigIcon}>✅</Text>
             <Text style={styles.doneTitle}>
-              {notificados > 0
-                ? `Alerta enviado para ${notificados} ${
-                    notificados === 1 ? 'contato' : 'contatos'
-                  }`
-                : 'Alerta registrado'}
+              {total > 0 ? 'Alerta enviado ao seu círculo' : 'Alerta registrado'}
             </Text>
-            {notificados === 0 && (
+            {total > 0 ? (
+              <Text style={styles.doneSub}>{partes.join(' · ')}</Text>
+            ) : (
               <Text style={styles.doneSub}>
-                Nenhum contato com o app instalado foi notificado por push. Considere
-                acionar seus contatos por outro meio.
+                Nenhum contato foi alcançado por push ou SMS. Acione seus contatos por
+                outro meio e confira o cadastro do círculo de confiança.
               </Text>
             )}
             <PrimaryBtn title="OK" onPress={close} />
           </View>
         );
+      }
 
       case 'CANCELLED':
         return (

@@ -173,6 +173,26 @@ supabase functions deploy notificar-circulo
 Variáveis de ambiente necessárias na função (já disponíveis por padrão no runtime do
 Supabase): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
 
+O alerta é **acionável**: a notificação push embute o **link de localização** (mapa) e
+uma **URL assinada da foto** (24h). Tocar no alerta abre o mapa.
+
+### SMS de emergência (fallback) — pendente de credenciais
+Contatos do círculo que **não têm o app instalado** (e com `notificar_sms = true`) recebem
+um **SMS** com o nome e o link de localização — desde que o usuário tenha consentido
+(`configuracao_panico.sms_fallback`). A Edge Function já implementa isso via **Twilio**;
+só falta plugar as credenciais (sem elas, o SMS é pulado sem quebrar o push):
+
+```bash
+# crie uma conta Twilio (tem trial), compre/!use um número e configure os secrets:
+supabase secrets set TWILIO_ACCOUNT_SID=ACxxxxxxxx
+supabase secrets set TWILIO_AUTH_TOKEN=xxxxxxxx
+supabase secrets set TWILIO_FROM=+15555555555
+```
+
+> Trocar de provedor (ex.: Zenvia/AWS SNS) = só reimplementar a função `enviarSMS` na
+> Edge Function. O número `TWILIO_FROM` deve estar em formato **E.164**. Os telefones do
+> círculo são enviados como `+55` + nacional.
+
 ---
 
 ## Setup manual — concluído ✅
