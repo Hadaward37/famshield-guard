@@ -2,9 +2,9 @@
 
 > Documento vivo de contexto para o Claude Code e para o founder. Resume **o que é o
 > produto, a stack, o estado atual, as decisões e as pendências**. Atualize a cada prompt.
-> Última atualização: **2026-06-17** — Prompt #4 **VALIDADO E2E** (teste real, 2 contas:
-> pânico → localização → foto → push FCM entregue). `google-services.json` provido no build
-> via hook `eas-build-pre-install`.
+> Última atualização: **2026-06-17** — Auditoria profunda + correções: alerta agora é
+> **acionável** (localização/foto na notificação), RLS/índices otimizados. Parecer de
+> viabilidade e lacunas críticas na **seção 10**.
 
 ---
 
@@ -223,10 +223,47 @@ Repo: **https://github.com/Hadaward37/famshield-guard** (público, branch `main`
 
 ---
 
-## 9. Próximos passos prováveis (Prompt #5+)
+## 9. Próximos passos (Prompt #5+) — priorizados pela auditoria
 
-- Histórico de eventos / tela de detalhe (deep link da notificação — há TODO em
-  `notifications.ts`).
-- Fallback **SMS** de emergência (config já existe em `configuracao_panico.sms_fallback`).
-- **Recovery**: guia de bloqueio emergencial dos bancos (`bancos_usuario`).
-- Configuração do **gesto** de pânico (`configuracao_panico.gesture_tipo`).
+1. **SMS fallback (CRÍTICO)** — hoje, se o contato não tem o app, recebe NADA. Num
+   produto BR de massa isso inviabiliza o alerta. Precisa provedor (Zenvia/Twilio/AWS SNS)
+   + Edge Function. Config `sms_fallback` já existe.
+2. **Tela de incidente para o CONTATO** — em vez de só abrir o Maps no tap, uma tela com
+   mapa + foto + ações ("estou a caminho", "liguei 190"). Requer dar leitura do evento ao
+   contato (RLS por telefone) OU manter via payload assinado.
+3. **Localização em tempo real de verdade** — hoje é 1 fix único no acionamento. O claim
+   "tempo real" exige background location updates + atualização contínua (permissão
+   sensível na Play Store).
+4. **Recovery** — guia de bloqueio emergencial dos bancos (`bancos_usuario`), o
+   diferencial BR ainda não implementado.
+5. Configuração do **gesto** de pânico (`configuracao_panico.gesture_tipo`); histórico de
+   eventos; billing (campos `plano`/`trial` existem, sem cobrança).
+
+---
+
+## 10. Parecer de viabilidade (auditoria 2026-06-17)
+
+**Veredito: o conceito é viável e o problema é real e doloroso no Brasil. A fundação
+técnica é sólida (auth, RLS, captura de pânico, push FCM validado em device). MAS ainda
+é um MVP-esqueleto, não um produto de segurança usável** — faltam pilares que são a
+própria proposta de valor.
+
+**O que funciona:** onboarding + LGPD, círculo de confiança (CRUD), captura de pânico
+(gesto 3s → localização → foto → evento), push FCM entregue e — após esta auditoria —
+**alerta acionável** (mapa + foto no push; tap abre o mapa).
+
+**Lacunas que impedem chamar de "produto" (ver seção 9):** sem **SMS fallback** o alerta
+só chega a contatos que instalaram o app; **"tempo real"** é só um ponto único; **bloqueio
+bancário** (diferencial BR) não existe; sem billing.
+
+**Riscos:** app de segurança que falha é passivo de imagem/legal; entrega de push não é
+100% garantida; permissão de localização em background passa por review rígido na Play
+Store; mercado tem concorrentes (Life360, bSafe, apps de PM/estaduais).
+
+**Recomendação:** vale continuar, mas o próximo marco deve ser **transformar o alerta em
+algo que salva** — SMS fallback + tela de incidente para o contato — antes de gesto/UI/
+billing. Sem isso o "uau" do teste E2E não se traduz em valor real para quem recebe.
+
+### Pendência manual adicional (Supabase Dashboard)
+- [ ] **Leaked Password Protection** (Auth → Policies) está desligado — ligar
+      (checa HaveIBeenPwned). Advisor de segurança aponta como WARN.
