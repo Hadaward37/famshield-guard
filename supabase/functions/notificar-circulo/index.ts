@@ -1,7 +1,7 @@
 // Edge Function: notificar-circulo
 // Recebe { evento_id }, valida o dono do evento, casa os contatos do círculo de
-// confiança com usuários do app (por telefone normalizado), busca seus push tokens
-// e dispara notificações pela Expo Push API.
+// confiança com usuários do app (por telefone normalizado), e dispara notificações
+// ACIONÁVEIS (com localização em mapa + foto assinada) pela Expo Push API.
 //
 // JWT É VERIFICADO (não usar --no-verify-jwt). O caller precisa estar autenticado.
 //
@@ -9,6 +9,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+const BUCKET = 'panic-photos';
+const FOTO_TTL_SEGUNDOS = 60 * 60 * 24; // 24h
 
 interface ExpoMessage {
   to: string;
@@ -92,10 +94,10 @@ Deno.serve(async (req: Request) => {
   // Cliente admin (service role) para ler dados de outros usuários (contatos).
   const admin = createClient(supabaseUrl, serviceRoleKey);
 
-  // 1) Valida que o evento pertence ao caller.
+  // 1) Valida que o evento pertence ao caller (e lê dados para o alerta).
   const { data: evento, error: eventoErr } = await admin
     .from('eventos_panico')
-    .select('id, user_id')
+    .select('id, user_id, latitude, longitude, foto_url')
     .eq('id', eventoId)
     .maybeSingle();
   if (eventoErr) return json(500, { error: 'Falha ao ler evento' });
@@ -112,33 +114,48 @@ Deno.serve(async (req: Request) => {
     .maybeSingle();
   const nomeRemetente = perfil?.nome || 'Um contato';
 
-  // 3) Contatos do círculo (por prioridade).
+  // 3) Monta a localização (link de mapa) e a foto (URL assinada de 24h) — é isso que
+  //    torna o alerta ACIONÁVEL para quem recebe.
+  const temGeo =
+    typeof evento.latitude === 'number' && typeof evento.longitude === 'number';
+  const mapsUrl = temGeo
+    ? `https://www.google.com/maps/search/?api=1&query=${evento.latitude},${evento.longitude}`
+    : null;
+
+  let fotoUrl: string | null = null;
+  if (evento.foto_url) {
+    const { data: signed } = await admin.storage
+      .from(BUCKET)
+      .createSignedUrl(evento.foto_url, FOTO_TTL_SEGUNDOS);
+    fotoUrl = signed?.signedUrl ?? null;
+  }
+
+  // 4) Contatos do círculo (por prioridade) -> telefones normalizados.
   const { data: contatos } = await admin
     .from('circulo_confianca')
-    .select('nome, telefone, ordem')
+    .select('telefone, ordem')
     .eq('user_id', user.id)
     .order('ordem', { ascending: true });
 
-  const telefonesCirculo = new Set(
-    (contatos ?? [])
-      .map((c: { telefone: string }) => normalizePhone(c.telefone))
-      .filter((t: string) => t.length >= 10),
-  );
-
-  if (telefonesCirculo.size === 0) {
+  const telefones = [
+    ...new Set(
+      (contatos ?? [])
+        .map((c: { telefone: string }) => normalizePhone(c.telefone))
+        .filter((t: string) => t.length >= 10),
+    ),
+  ];
+  if (telefones.length === 0) {
     return json(200, { notificados: 0 });
   }
 
-  // 4) Casa telefones com usuários do app.
+  // 5) Casa telefones com usuários do app — query direcionada (sem varrer todos os
+  //    perfis). Telefones são gravados já normalizados no app.
   const { data: perfis } = await admin
     .from('profiles')
     .select('id, telefone')
-    .not('telefone', 'is', null);
+    .in('telefone', telefones);
 
   const matchedUserIds = (perfis ?? [])
-    .filter((p: { telefone: string | null }) =>
-      telefonesCirculo.has(normalizePhone(p.telefone)),
-    )
     .map((p: { id: string }) => p.id)
     .filter((id: string) => id !== user.id);
 
@@ -146,7 +163,7 @@ Deno.serve(async (req: Request) => {
     return json(200, { notificados: 0 });
   }
 
-  // 5) Push tokens dos contatos casados.
+  // 6) Push tokens dos contatos casados.
   const { data: tokens } = await admin
     .from('push_tokens')
     .select('expo_token')
@@ -159,17 +176,29 @@ Deno.serve(async (req: Request) => {
     return json(200, { notificados: 0 });
   }
 
+  const corpoLocal = mapsUrl
+    ? `\nLocalização: ${mapsUrl}`
+    : '\nLocalização indisponível.';
+
   const messages: ExpoMessage[] = expoTokens.map((to: string) => ({
     to,
-    title: '⚠️ ALERTA FAMSHIELD',
-    body: `${nomeRemetente} acionou o botão de pânico`,
-    data: { evento_id: eventoId, tipo: 'panico' },
+    title: '🚨 Emergência — FamShield',
+    body: `${nomeRemetente} acionou o alerta de pânico.${corpoLocal}`,
+    data: {
+      evento_id: eventoId,
+      tipo: 'panico',
+      remetente: nomeRemetente,
+      latitude: evento.latitude,
+      longitude: evento.longitude,
+      maps_url: mapsUrl,
+      foto_url: fotoUrl,
+    },
     sound: 'default',
     priority: 'high',
     channelId: 'panico',
   }));
 
-  // 6) Envia em chunks de 100. Nunca derruba a função por erro de push.
+  // 7) Envia em chunks de 100. Nunca derruba a função por erro de push.
   let notificados = 0;
   try {
     for (const lote of chunk(messages, 100)) {
@@ -195,7 +224,7 @@ Deno.serve(async (req: Request) => {
     notificados = 0;
   }
 
-  // 7) Atualiza o contador no evento (best-effort).
+  // 8) Atualiza o contador no evento (best-effort).
   await admin
     .from('eventos_panico')
     .update({ notificacoes_enviadas: notificados })

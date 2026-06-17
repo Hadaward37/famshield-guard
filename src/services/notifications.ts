@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, Linking } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { supabase } from './supabase';
@@ -122,9 +122,17 @@ export function setupNotificationHandlers(): void {
     const data = response.notification.request.content.data as {
       tipo?: string;
       evento_id?: string;
+      maps_url?: string | null;
     };
     if (data?.tipo === 'panico') {
-      // TODO: navegar para a tela de histórico/detalhe do evento (data.evento_id).
+      // Ação imediata para o contato: abrir a localização da pessoa no mapa.
+      if (data.maps_url) {
+        Linking.openURL(data.maps_url).catch((e) => {
+          if (__DEV__) console.warn('[notifications] falha ao abrir mapa:', e);
+        });
+      }
+      // TODO (Prompt #5): tela dedicada de incidente para o contato (mapa + foto +
+      // "estou a caminho" / "liguei pra polícia"), em vez de só abrir o Maps.
       if (__DEV__) console.log('[notifications] tap em alerta de pânico:', data.evento_id);
     }
   });
